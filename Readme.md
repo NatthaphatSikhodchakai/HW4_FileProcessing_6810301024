@@ -1,3 +1,80 @@
+# HW4 FileProcessing - MalwareBazaar Dataset
+
+Student ID: 6810301024  
+Name: Natthaphat Sikhodchakai
+
+## Homework Summary
+
+This homework improves the original FileProcessing project to support MalwareBazaar CSV data processing.
+
+The improved program can:
+
+1. Read CSV files line by line using StreamReader.
+2. Load only a selected range of records using Start row and End row.
+3. Filter records by file type, for example exe.
+4. Validate invalid input when End row is less than Start row.
+5. Show the total number of loaded rows after reading data.
+
+## Added Features
+
+### 1. Partial Loading
+
+The user can enter Start row and End row.  
+The program will load only records within the selected range.
+
+Example:  
+Start row = 1  
+End row = 10  
+Expected result: Loaded 10 rows.
+
+### 2. File Type Filtering
+
+The user can enter a file type such as exe.  
+The program will display only records that match the selected file type.
+
+Example:  
+Start row = 1  
+End row = 100  
+File type = exe  
+Expected result: Load only exe records.
+
+### 3. Error Handling
+
+If the user enters an invalid range, such as Start row = 100 and End row = 10,  
+the program will show an error message.
+
+Expected result: End row must be greater than or equal to Start row.
+
+## How to Use
+
+1. Open the project in Visual Studio.
+2. Run the program.
+3. Click Browse and select a CSV file.
+4. Go to the CSV tab.
+5. Enter Start row and End row.
+6. Enter File type if filtering is needed.
+7. Click read as csv.
+
+## Test Examples
+
+| Test Case | Input | Expected Result |
+|---|---|---|
+| TC01 | Start row = 1, End row = 10, File type empty | Loaded 10 rows |
+| TC02 | Start row = 1, End row = 100, File type = exe | Load only exe records |
+| TC03 | Start row = 100, End row = 10 | Show invalid range error |
+| TC04 | Start row = 1, End row = 100, File type = abc | Loaded 0 rows |
+| TC05 | Start row = 50, End row = 150, File type = exe | Load exe records only within selected range |
+
+## Note
+
+Large MalwareBazaar dataset files should not be uploaded to GitHub.
+
+---
+
+
+
+
+
 # 📄 Text/CSV Viewer (C# Learning Project)
 
 ## 📌 Overview
