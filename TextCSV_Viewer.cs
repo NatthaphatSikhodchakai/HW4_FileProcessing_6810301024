@@ -59,60 +59,157 @@ namespace FileProcessing
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The event data.</param>
 		private void btReadCSV_Click(object sender, EventArgs e)
-		{
+        {
+            dgvData.Rows.Clear();
+            dgvData.Columns.Clear();
+            dgvData.AllowUserToAddRows = false;
+
+            int startRow = 1;
+            int endRow = int.MaxValue;
+
+            if (!string.IsNullOrWhiteSpace(txtStartRow.Text))
+            {
+                if (!int.TryParse(txtStartRow.Text.Trim(), out startRow))
+                {
+                    MessageBox.Show("Start row must be a number.");
+                    return;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(txtEndRow.Text))
+            {
+                if (!int.TryParse(txtEndRow.Text.Trim(), out endRow))
+                {
+                    MessageBox.Show("End row must be a number.");
+                    return;
+                }
+            }
+
+            if (startRow < 1)
+            {
+                MessageBox.Show("Start row must be greater than or equal to 1.");
+                return;
+            }
+
+            if (endRow < startRow)
+            {
+                MessageBox.Show("End row must be greater than or equal to Start row.");
+                return;
+            }
+
+            string fileTypeFilter = txtFileType.Text.Trim().Trim('"').ToLower();
+
             using (StreamReader srReader = new StreamReader(tbFileName.Text))
             {
-                string strLine; // Variable to hold each line read from the file
-				bool bHeaderRead = false;   // Flag to indicate whether the header line has been read
+                string strLine;
+                string[] strHeaders_arr = null;
+                bool bHeaderRead = false;
+                int currentRecord = 0;
 
-				// Main loop: Read the file line by line
-				while ((strLine = srReader.ReadLine()) != null)
+                while ((strLine = srReader.ReadLine()) != null)
                 {
-                    string[] strHeaders_arr = null;
-					// Skip comment lines and check for header line
-					if (strLine.StartsWith("#")) 
-                    { 
-                        if (    strLine.Length > 8
-                           &&   strLine.Substring(0, 8).Equals("#HEADER") 
-                           )
-                        {
-							// Read the header line and split it into an array of headers
-							strHeaders_arr = strLine.Substring(8).Split(',');
-						}
+                    if (string.IsNullOrWhiteSpace(strLine))
+                    {
                         continue;
                     }
-					// Split the current line into an array of values
-					string[] strValues_arr = strLine.Split(',');
 
-					// If the header has not been read yet, add the headers to the DataGridView columns
-					if (!bHeaderRead)
+                    if (strLine.StartsWith("#"))
                     {
-						// Add the headers to the DataGridView columns, using the header names from the header line if available
-						foreach (string strHeader in strValues_arr)
+                        if (strLine.Length > 8 && strLine.Substring(0, 8).Equals("#HEADER"))
                         {
-                            if ( strHeaders_arr == null )
-                                dgvData.Columns.Add(strHeader.Trim(), strHeader.Trim());
+                            strHeaders_arr = strLine.Substring(8).Split(',');
+                        }
+
+                        continue;
+                    }
+
+                    string[] strValues_arr = strLine.Split(',');
+
+                    currentRecord++;
+
+                    if (currentRecord < startRow)
+                    {
+                        continue;
+                    }
+
+                    if (currentRecord > endRow)
+                    {
+                        break;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(fileTypeFilter))
+                    {
+                        bool matchedFileType = false;
+
+                        foreach (string value in strValues_arr)
+                        {
+                            string cleanValue = value.Trim().Trim('"').ToLower();
+
+                            if (cleanValue == fileTypeFilter)
+                            {
+                                matchedFileType = true;
+                                break;
+                            }
+                        }
+
+                        if (!matchedFileType)
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (!bHeaderRead)
+                    {
+                        int columnCount = strValues_arr.Length;
+
+                        if (strHeaders_arr != null && strHeaders_arr.Length > columnCount)
+                        {
+                            columnCount = strHeaders_arr.Length;
+                        }
+
+                        for (int i = 0; i < columnCount; i++)
+                        {
+                            string columnName;
+
+                            if (strHeaders_arr != null && i < strHeaders_arr.Length && !string.IsNullOrWhiteSpace(strHeaders_arr[i]))
+                            {
+                                columnName = strHeaders_arr[i].Trim().Trim('"');
+                            }
                             else
-                                dgvData.Columns.Add(strHeader.Trim(), strHeaders_arr[dgvData.Columns.Count].Trim());
-						}
+                            {
+                                columnName = "Column" + (i + 1);
+                            }
+
+                            if (dgvData.Columns.Contains(columnName))
+                            {
+                                columnName = columnName + "_" + i;
+                            }
+
+                            dgvData.Columns.Add(columnName, columnName);
+                        }
+
                         bHeaderRead = true;
                     }
-                    else
-                    {
-						// Add the values to the DataGridView rows
-						dgvData.Rows.Add(strValues_arr);
-                    }
-				}   // Main loop: Read the file line by line
-			}
 
-		}
-		/// <summary>
-		/// Handles the Click event of the Browse button, allowing the user to select a file and displaying its path in the
-		/// file name text box.
-		/// </summary>
-		/// <param name="sender">The source of the event.</param>
-		/// <param name="e">The event data.</param>
-		private void btBrowse_Click(object sender, EventArgs e)
+                    while (dgvData.Columns.Count < strValues_arr.Length)
+                    {
+                        string columnName = "Column" + (dgvData.Columns.Count + 1);
+                        dgvData.Columns.Add(columnName, columnName);
+                    }
+
+                    dgvData.Rows.Add(strValues_arr);
+                }
+            }
+
+            MessageBox.Show("Loaded " + dgvData.Rows.Count + " rows.");
+        }
+        /// <summary>
+        /// Handles the Click event of the Browse button, allowing the user to select a file and displaying its path in the
+        /// file name text box.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The event data.</param>
+        private void btBrowse_Click(object sender, EventArgs e)
 		{
 			using (OpenFileDialog ofd = new OpenFileDialog())
 			{
@@ -123,5 +220,30 @@ namespace FileProcessing
 				}
 			}
 		}
-	}   // End of frmTextView class
+
+        private void rtbShow_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void txtStartRow_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+    }   // End of frmTextView class
 }
